@@ -4,7 +4,7 @@ from app.models.schemas import ChatRequest, ChatResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 
-app = FastAPI()
+app = FastAPI(title = "Hybrid Chatbot")
 
 
 app.add_middleware(
