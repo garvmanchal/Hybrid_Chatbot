@@ -1,6 +1,6 @@
 from fastapi import FastAPI 
-from app.services.llm_client import call_llm
-from app.models.schemas import ChatRequest, ChatResponse
+from backend.services.llm_client import call_llm
+from backend.models.schemas import ChatRequest, ChatResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 

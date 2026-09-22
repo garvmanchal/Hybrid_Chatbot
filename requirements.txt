@@ -4,3 +4,5 @@ google-genai
 dotenv
 uvicorn
 pydantic 
+fitz / pip install pymupdf
+hashlib
