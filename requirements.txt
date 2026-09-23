@@ -5,4 +5,3 @@ dotenv
 uvicorn
 pydantic 
 fitz / pip install pymupdf
-hashlib
