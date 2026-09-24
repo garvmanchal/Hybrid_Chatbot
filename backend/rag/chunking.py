@@ -1,18 +1,20 @@
+#Chunking : 
+# chunking is a way of process in which it divide a large document into smaller peices called chunks , 
+# which make it easier for the system to process, store , search , and retrieve releveant info
+
 
 def chunk_text(text : str , chunk_word : int = 60 , overlap_word : int = 15) -> list[dict]:
     words = text.split()
     chunks, start = [], 0
     while start < len(words):
 
-        end = start +  chunk_word   
-        chunks.append(" ".join(words[start:end]))
+        end = start +  chunk_word    # Keep creating chunks as long as start hasn't reached the end of the words.
+        chunks.append(" ".join(words[start:end])) # take the words from start up to end, join them into one string, and append that string to the chunks list.
         start = end - overlap_word
 
     return chunks
 
-
-
-
+ 
 def chunk_document(source_id : str, heading : str, text : str, permission_scope : str,
                  updated_at: str, content_type: str = "policy") -> list[dict]:
 
@@ -29,6 +31,6 @@ def chunk_document(source_id : str, heading : str, text : str, permission_scope 
         "status" : "published"
     }
 
-    for i, piece in enumerate(pieces)
+    for i, piece in enumerate(pieces) #Go through every item in pieces, and give me both its index (i) and its value (piece).
 
     ]
