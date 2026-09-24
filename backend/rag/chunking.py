@@ -16,19 +16,20 @@ def chunk_text(text : str , chunk_word : int = 60 , overlap_word : int = 15) -> 
 
  
 def chunk_document(source_id : str, heading : str, text : str, permission_scope : str,
-                 updated_at: str, content_type: str = "policy") -> list[dict]:
+                 updated_at: str,page : int,  content_type: str = "policy") -> list[dict]:
 
     pieces = chunk_text(text)
 
     return[{
-        "chunk_id" : f"{source_id} - c{i}",
+        "chunk_id" : f"{source_id} -p{page} -c{i}",
         "text" : piece,
         "source_id" : source_id,
         "heading" : heading,
         "permission_scope": permission_scope,
         "updated_at" : updated_at,
         "content_type" : content_type,
-        "status" : "published"
+        "status" : "published",
+        "page" : page
     }
 
     for i, piece in enumerate(pieces) #Go through every item in pieces, and give me both its index (i) and its value (piece).

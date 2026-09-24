@@ -52,7 +52,6 @@ def choose_route(prompt: str) -> str :
 
     # for strong task review 
     if any(word in prompt_lower for word in[
-        "review",
         "debug",
         "analyze", 
         "find bugs",

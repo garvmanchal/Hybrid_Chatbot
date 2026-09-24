@@ -9,11 +9,9 @@ interface ChatMessage {
 
 interface ChatResponse {
     answer : string
-    model_routing : string
-    input_tokens : number
-    output_tokens : number
-    estimated_cost_usd : number
+    citations : string[]
     needs_human_review : boolean
+    model_routing : string
 }
 
 
@@ -24,7 +22,9 @@ export default function Chat() {
 
 
     const sendMessage = async () => {
-        if (!input.trim()) return 
+        if (!input.trim()) return   
+
+        const question = input.trim()
 
         const userMessage : ChatMessage = {role : "user", text : input}
         setMessages((prev) => [...prev, userMessage])
@@ -38,7 +38,7 @@ export default function Chat() {
                     "Content-Type" : "application/json",
                 },
                 body : JSON.stringify({
-                    message : input,
+                    question : question,
                 })
 
             })
@@ -47,7 +47,9 @@ export default function Chat() {
                 throw new Error(`Server error : ${res.status}`)
             }
             
-            const data : ChatResponse = await res.json()
+            const data : ChatResponse=  await res.json()
+            console.log("Chat response:",data)
+
 
             const botMessage : ChatMessage = {
                 role : "bot",
@@ -77,8 +79,6 @@ export default function Chat() {
         }
     }
    
-
-
     return (
     <div
       style={{

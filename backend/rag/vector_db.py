@@ -27,7 +27,7 @@ class InVectorDB:
         ]
 
         scored = sorted(candidates, key = lambda r : cosine_sim(query_vector, r["vector"]), reverse = True)
-        return sorted[:limit]
+        return scored[:limit]
 
 vector_db = InVectorDB()
 

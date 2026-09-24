@@ -14,7 +14,6 @@ def bm25_search(query : str, filters : dict, limit : int) -> list[dict]:
         r for r in vector_db.rows
         if r ["permission_scope"] in filters["permission_scope"]
         and r ["status"] == filters.get("status", "published")
-
     ]
     '''
     the below code says :   
@@ -51,7 +50,7 @@ def reciprocal_rank_fusion(bm25_ranked : list[dict], vector_ranked : list[dict],
     scores : dict[str, float] = {}
 
     # This dictionary stores the actual chunk using its chunk_id.
-    by_id ={}
+    by_id : dict[str, dict] = {}
 
     '''
     scores.get(chunk["chunk_id"], 0)
@@ -59,6 +58,8 @@ def reciprocal_rank_fusion(bm25_ranked : list[dict], vector_ranked : list[dict],
     Get the current score for this chunk. If it doesn't exist yet, use 0.
     '''
     for rank, chunk in enumerate(bm25_ranked):
+        chunk_id = chunk["chunk_id"]
+
         scores[chunk["chunk_id"]] = scores.get(chunk["chunk_id"], 0) + 1 / (k + rank + 1)
         by_id[chunk["chunk_id"]] = chunk
 
@@ -67,8 +68,21 @@ def reciprocal_rank_fusion(bm25_ranked : list[dict], vector_ranked : list[dict],
       while getting both the index (position) and the item at the same time
     '''
 
-    ranked_ids = sorted(scores.items(), key = lambda pair:pair[1], reverse = True)
-    return [by_id[cid] for cid, _ in ranked_ids]
+
+    # Vector Results
+    for rank, chunk in enumerate(vector_ranked):
+        chunk_id = chunk["chunk_id"]
+
+        scores[chunk_id] = scores.get(chunk_id,0) + 1/ (k + rank + 1)
+        by_id[chunk_id] = chunk
+
+    ranked_ids = sorted(
+        scores.items(),
+        key = lambda pair:pair[1], 
+        reverse = True 
+    )
+
+    return [by_id[chunk_id] for chunk_id, _ in ranked_ids]
 
 
 async def hybrid_search(query: str, allowed_scopes : list[str], top_k : int = 30) ->list[dict]:
