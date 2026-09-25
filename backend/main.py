@@ -3,7 +3,7 @@ from fastapi import FastAPI
 # from backend.models.schemas import ChatRequest, ChatResponse
 from fastapi.middleware.cors import CORSMiddleware
 from backend.chat.routes import router as chat_router
-from backend.rag.seed_index import seed_index
+# from backend.rag.seed_index import seed_index
 
 
 app = FastAPI(title = "Hybrid Chatbot")
@@ -18,9 +18,9 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    seed_index()
+# @app.on_event("startup")
+# async def startup_event():
+#     seed_index()
 
     
 @app.get("/")

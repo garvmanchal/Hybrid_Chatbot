@@ -19,7 +19,7 @@ def build_cited_prompt(question: str, chunks: list[dict]) -> str:
     evidence = "\n".join(lines)
 
     return (
-    "Answer using only the evidence below.\n"
+    "Answer using only the evidence below."
     "Cite every factual sentence with its citation label.\n"
     "Do not use outside knowledge or invent information.\n"
     "If the evidence does not answer the question, "
@@ -30,8 +30,15 @@ def build_cited_prompt(question: str, chunks: list[dict]) -> str:
 
     f"Question: {question}\n\n"
 
-    "Return JSON only: "
-    '{"answer": "...", '
-    '"citations": ["C1"], '
-    '"needs_human_review": false}'
+    # "Return JSON only: "
+    # '{"answer": "...", '
+    # '"citations": ["C1"], '
+    # '"needs_human_review": false}'
+
+    "OUTPUT FORMAT:\n"
+        "{\n"
+        '  "answer": "your answer here",\n'
+        '  "citations": ["C1", "C2"],\n'
+        '  "needs_human_review": false\n'
+        "}"
 )
