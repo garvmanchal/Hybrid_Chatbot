@@ -1,375 +1,814 @@
 # 🤖 Hybrid Chatbot
 
-A FastAPI-based hybrid LLM chatbot that intelligently routes user
-prompts to different language models based on the type and complexity of
-the request.
+A full-stack AI chatbot built with **FastAPI, React, RAG, hybrid retrieval, reranking, and multi-model LLM routing**.
 
-The project currently integrates **Google Gemini** and **Groq-hosted
-models** and exposes a simple REST API for chatbot interactions.
+The project is designed as a production-oriented GenAI application where the chatbot can answer questions from a knowledge base and from user-uploaded PDF documents. It also supports model fallback when the primary provider is unavailable.
+
+> **Current development focus:** RAG + document ingestion + LLM orchestration.  
+> **Planned next feature:** JWT-based authentication and a login/register flow.
+
+---
 
 ## ✨ Features
 
--   🚀 FastAPI backend
--   🔀 Rule-based LLM routing
--   🤖 Google Gemini integration
--   ⚡ Groq integration
--   🧠 Different model routes for different task types
--   📝 Pydantic request/response validation
--   🌐 CORS support for a Vite/React frontend
--   🔍 Special routing for review/debugging tasks
--   📚 Long-context prompt detection
--   📊 Response metadata for model route, token usage, estimated cost,
-    and human-review flag
--   🔐 Environment-variable based API key configuration
+### AI / RAG
+- 📚 Retrieval-Augmented Generation (RAG)
+- 📄 PDF text extraction with PyMuPDF
+- ✂️ Document chunking with overlap
+- 🔢 Lightweight text embeddings
+- 🔎 Vector similarity search
+- 🔤 BM25-style keyword retrieval
+- 🔀 Reciprocal Rank Fusion (RRF) for hybrid search
+- 🎯 Reranking of retrieved chunks
+- 📝 Citation-aware prompts using labels such as `[C1]`
+- 👤 Session-scoped uploaded documents
 
-## 🏗️ Project Structure
+### LLM / Orchestration
+- 🔀 Rule-based model routing
+- ⚡ Fast model route for simple requests
+- ⚖️ Balanced model route for normal requests
+- 🧠 Long-context route
+- 🔍 Strong/review route
+- 🔁 Gemini → Groq fallback when Gemini is unavailable
+- 📦 Structured JSON-style LLM responses
+- 🚨 Human-review flag for unsupported/invalid RAG responses
 
-``` text
+### Backend
+- 🚀 FastAPI
+- ⚡ Async API endpoints
+- 📤 Multipart file uploads
+- 🔐 Environment-variable based API keys
+- 🌐 CORS configuration
+- 🧩 Modular RAG architecture
+
+### Frontend
+- ⚛️ React 19
+- 🟦 TypeScript
+- ⚡ Vite
+- 🧭 React Router
+- 💬 WhatsApp-style chat interface
+- 📎 PDF/image attachment UI
+- ⏳ Loading / typing state
+- 🧾 Attachment status messages
+
+---
+
+# 🏗️ Architecture
+
+```text
+                    ┌─────────────────────┐
+                    │     React Client    │
+                    │  TypeScript + Vite  │
+                    └──────────┬──────────┘
+                               │
+                     question + session_id
+                               │
+                         optional file
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    FastAPI /chat/   │
+                    └──────────┬──────────┘
+                               │
+                    ┌──────────▼──────────┐
+                    │   Document Ingest   │
+                    │                     │
+                    │ PDF → Text → Chunks │
+                    │       → Embeddings  │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    In-Memory DB     │
+                    │  chunks + vectors   │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Hybrid Search     │
+                    │                     │
+                    │ Vector Search       │
+                    │       +             │
+                    │ BM25 Search         │
+                    │       ↓             │
+                    │ RRF Fusion           │
+                    └──────────┬──────────┘
+                               │
+                          top candidates
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │      Reranker       │
+                    └──────────┬──────────┘
+                               │
+                          top chunks
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │   Prompt Builder    │
+                    │  Evidence + [C#]    │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │    LLM Router       │
+                    │                     │
+                    │ Gemini / Groq       │
+                    │ + fallback          │
+                    └──────────┬──────────┘
+                               │
+                               ▼
+                    ┌─────────────────────┐
+                    │ Structured Response │
+                    │ answer + citations  │
+                    │ + review flag       │
+                    └─────────────────────┘
+```
+
+---
+
+# 📂 Project Structure
+
+```text
 Hybrid Chatbot/
 │
-├── app/
+├── backend/
 │   ├── main.py
+│   │
+│   ├── chat/
+│   │   └── routes.py
 │   │
 │   ├── models/
 │   │   └── schemas.py
 │   │
+│   ├── rag/
+│   │   ├── chunking.py
+│   │   ├── embedding.py
+│   │   ├── ingest.py
+│   │   ├── pdf_loader.py
+│   │   ├── prompt.py
+│   │   ├── reranker.py
+│   │   ├── search.py
+│   │   ├── seed_index.py
+│   │   └── vector_db.py
+│   │
 │   └── services/
+│       ├── chat_service.py
 │       └── llm_client.py
 │
-├── .env
+├── frontend_react/
+│   └── react-app/
+│       ├── src/
+│       │   ├── components/
+│       │   ├── pages/
+│       │   ├── App.tsx
+│       │   └── main.tsx
+│       ├── package.json
+│       └── vite.config.ts
+│
 ├── requirements.txt
+├── .gitignore
 └── README.md
 ```
 
-## 🔄 How It Works
+---
 
-The application receives a user's message through the `/chat` endpoint.
+# 🔄 RAG Pipeline
 
-``` text
-User Prompt
-    │
-    ▼
-FastAPI /chat
-    │
-    ▼
-Prompt Router
-    │
-    ├── Review / Debug / Analyze
-    │        ▼
-    │   Strong Model + Human Review Flag
-    │
-    ├── Long Prompt
-    │        ▼
-    │   Long-Context Model
-    │
-    ├── Simple / Quick Prompt
-    │        ▼
-    │   Fast Model
-    │
-    └── Other Prompts
-             ▼
-       Balanced Model
-             │
-             ▼
-        LLM Provider
-             │
-             ▼
-        JSON Response
+The current RAG pipeline follows:
+
+```text
+PDF Upload
+    ↓
+PyMuPDF
+    ↓
+Page Text
+    ↓
+Chunking
+    ↓
+Embedding
+    ↓
+In-Memory Vector DB
+    ↓
+       ┌───────────────┐
+       │               │
+       ▼               ▼
+ Vector Search      BM25 Search
+       │               │
+       └───────┬───────┘
+               ▼
+          RRF Fusion
+               ↓
+          Top 30 chunks
+               ↓
+            Rerank
+               ↓
+          Top 15 chunks
+               ↓
+       Citation Prompt
+               ↓
+             LLM
+               ↓
+          Final Answer
 ```
 
-## 🧠 Model Routing
+## Chunking
 
-The router uses simple rules to select a model route.
+Documents are split into approximately **60-word chunks** with **15-word overlap**.
 
-  ----------------------------------------------------------------------------
-  Route                        Condition               Provider
-  ---------------------------- ----------------------- -----------------------
-  `strong_model_with_review`   Review, debug, analyze, Groq
-                               bug-finding, or         
-                               code-review prompts     
+The overlap helps preserve context between adjacent chunks.
 
-  `long_context_model`         Prompt longer than      Gemini
-                               10,000 characters       
+---
 
-  `fast_model`                 Simple/quick prompts    Gemini
-                               such as greetings       
+# 📄 File Upload Flow
 
-  `balanced_model`             Default route for other Groq
-                               prompts                 
-  ----------------------------------------------------------------------------
+The React frontend sends:
 
-The model names are configured inside `app/services/llm_client.py`.
+```text
+question
+session_id
+file
+```
 
-## 📡 API Endpoints
+using `multipart/form-data`.
 
-### `GET /`
+The backend validates:
 
-Returns a basic health/message response.
+- PDF
+- JPG
+- PNG
+- WEBP
+- Maximum size: 10 MB
+
+Currently:
+
+- **PDF text** is extracted and indexed.
+- **Images** are accepted but are not searchable yet because an OCR/vision ingestion pipeline has not been implemented.
+
+Uploaded PDF chunks receive a session-specific permission scope:
+
+```text
+session:<session_id>
+```
+
+This allows the retrieval layer to search the uploaded document only within the relevant chat session.
+
+---
+
+# 🔎 Hybrid Search
+
+The project combines two retrieval strategies.
+
+### 1. Vector Search
+
+The query is converted into a vector and compared with stored chunk vectors using cosine similarity.
+
+### 2. Keyword Search
+
+A lightweight BM25-style keyword overlap implementation retrieves chunks containing terms from the query.
+
+### 3. Reciprocal Rank Fusion
+
+The two ranked lists are combined using RRF:
+
+```text
+BM25 results
+      +
+Vector results
+      ↓
+RRF
+      ↓
+Combined ranking
+```
+
+This gives the system both semantic and keyword-based retrieval behavior.
+
+---
+
+# 🎯 Reranking
+
+After hybrid search retrieves up to 30 candidates, the reranker calculates semantic similarity again and keeps the best 15 chunks.
+
+```text
+30 candidates
+      ↓
+Reranker
+      ↓
+15 chunks
+```
+
+These chunks are then supplied to the LLM.
+
+---
+
+# 📝 Citation-Aware Generation
+
+The prompt builder labels retrieved evidence:
+
+```text
+[C1]
+[C2]
+[C3]
+...
+```
+
+The model is instructed to cite factual statements using those labels.
 
 Example:
 
-``` json
+```text
+The company's working hours are 9:00 AM to 6:00 PM [C2].
+```
+
+The backend extracts citation labels from the final answer and returns them to the frontend.
+
+---
+
+# 🤖 LLM Routing
+
+The current router selects a model route based on the prompt.
+
+| Route | Purpose |
+|---|---|
+| `fast_model` | Simple / quick requests |
+| `balanced_model` | Default route |
+| `long_context_model` | Large prompts |
+| `strong_model_with_review` | Debug / analyze / code-review style prompts |
+
+Current model configuration is defined in:
+
+```text
+backend/services/llm_client.py
+```
+
+The application currently uses Google Gemini and Groq-hosted models.
+
+---
+
+# 🔁 Provider Fallback
+
+If the selected Gemini model returns a server-side error, the application switches to the Groq fallback model.
+
+```text
+Gemini
+  │
+  ├── Success → return Gemini response
+  │
+  └── Server error
+          ↓
+       Groq fallback
+          ↓
+       return response
+```
+
+This allows the chatbot to continue working when the primary provider is temporarily unavailable.
+
+---
+
+# 🧠 Casual Conversation Routing
+
+Simple conversational messages such as:
+
+```text
+hi
+hello
+hey
+thanks
+how are you
+what's up
+```
+
+are detected before RAG retrieval.
+
+They follow a lighter path:
+
+```text
+User message
+     ↓
+Casual detection
+     ↓
+LLM
+     ↓
+Response
+```
+
+A casual message does not need document retrieval or citations.
+
+---
+
+# 🌐 API
+
+## Health / Root
+
+```http
+GET /
+```
+
+Example response:
+
+```json
 {
   "message": "This is my chatbot"
 }
 ```
 
-### `POST /chat`
+## Chat
 
-Sends a message to the chatbot.
+```http
+POST /chat/
+```
 
-#### Request
+The current endpoint accepts multipart form data.
 
-``` json
+### Fields
+
+```text
+question
+session_id
+file (optional)
+```
+
+Example conceptual request:
+
+```text
+question = "What are the working hours?"
+session_id = "unique-session-id"
+file = employee-handbook.pdf
+```
+
+### Example response
+
+```json
 {
-  "message": "Explain FastAPI in simple words",
-  "risk": "low"
+  "answer": "The working hours are ... [C2].",
+  "citations": ["[C2]"],
+  "needs_human_review": false,
+  "model_routing": "balanced_model",
+  "attachment": {
+    "filename": "employee-handbook.pdf",
+    "indexed": true,
+    "chunks_indexed": 12,
+    "note": null
+  }
 }
 ```
 
-`risk` accepts:
+> The exact response fields can evolve as the API is developed.
 
--   `low`
--   `medium`
--   `high`
+---
 
-If it is omitted, the default value is `low`.
+# ⚛️ Frontend
 
-#### Response
+The frontend is located at:
 
-``` json
-{
-  "answer": "FastAPI is a modern Python framework...",
-  "model_route": "balanced_model",
-  "input_token": 0,
-  "output_token": 0,
-  "estimated_cost_usd": 0.0,
-  "needs_human_review": false
-}
+```text
+frontend_react/react-app/
 ```
 
-> Token counts and estimated cost are currently not fully implemented
-> for Gemini responses, and cost is currently returned as `0.0`. These
-> fields are part of the API design and can be extended later.
+Run it with:
 
-## 🛠️ Tech Stack
-
--   **Python**
--   **FastAPI**
--   **Pydantic**
--   **Google GenAI SDK**
--   **Groq SDK**
--   **Uvicorn**
--   **python-dotenv**
--   **React/Vite frontend compatible through CORS**
-
-## ⚙️ Installation
-
-### 1. Clone the repository
-
-``` bash
-git clone <your-repository-url>
-cd "Hybrid Chatbot"
+```bash
+cd frontend_react/react-app
+npm install
+npm run dev
 ```
 
-### 2. Create a virtual environment
+The Vite development server normally runs at:
+
+```text
+http://localhost:5173
+```
+
+The backend CORS configuration currently allows:
+
+```text
+http://localhost:5173
+```
+
+---
+
+# 🐍 Backend Setup
+
+From the project root:
+
+```bash
+python -m venv venv
+```
 
 Windows:
 
-``` bash
-python -m venv venv
+```bash
 venv\Scripts\activate
 ```
 
-macOS/Linux:
+Install the required packages:
 
-``` bash
-python3 -m venv venv
-source venv/bin/activate
+```bash
+pip install fastapi groq google-genai python-dotenv uvicorn pydantic pymupdf python-multipart
 ```
 
-### 3. Install dependencies
+Then start the backend:
 
-``` bash
-pip install -r requirements.txt
+```bash
+uvicorn backend.main:app --reload
 ```
 
-## 🔑 Environment Variables
+Backend:
+
+```text
+http://127.0.0.1:8000
+```
+
+Swagger:
+
+```text
+http://127.0.0.1:8000/docs
+```
+
+ReDoc:
+
+```text
+http://127.0.0.1:8000/redoc
+```
+
+---
+
+# 🔑 Environment Variables
 
 Create a `.env` file in the project root:
 
-``` env
+```env
 GEMINI_API_KEY=your_gemini_api_key
 GROQ_API_KEY=your_groq_api_key
 ```
 
-**Never commit your real API keys to GitHub.**
+Never commit real API keys.
 
-Add this to `.gitignore`:
+The repository already contains `.gitignore` rules for:
 
-``` gitignore
+```text
 .env
 venv/
 __pycache__/
 *.pyc
+node_modules/
+dist/
 ```
 
-If an API key has already been committed or exposed, revoke/rotate it
-and replace it with a new key.
+If an API key is ever exposed publicly, revoke/rotate it immediately.
 
-## ▶️ Run the Application
+---
 
-From the project root:
+# 🔐 Planned Authentication: JWT + Login
 
-``` bash
-uvicorn app.main:app --reload
+Authentication is the next major frontend/backend feature.
+
+The planned architecture is:
+
+```text
+                  User
+                   │
+                   ▼
+              Login Page
+                   │
+                   ▼
+            POST /auth/login
+                   │
+                   ▼
+        Backend verifies credentials
+                   │
+                   ▼
+             JWT issued
+                   │
+                   ▼
+        React authenticated state
+                   │
+                   ▼
+        Protected /chat/ request
+                   │
+                   ▼
+       Backend validates JWT
+                   │
+                   ▼
+              Chat / RAG
 ```
 
-The API will normally be available at:
+### Important
 
-``` text
-http://127.0.0.1:8000
+JWT authentication should **not be implemented only in React**.
+
+The frontend should provide the login UI and send authentication credentials/token, but the **backend must verify the JWT** before allowing access to protected endpoints.
+
+The planned backend pieces are:
+
+```text
+backend/
+├── auth/
+│   ├── routes.py
+│   ├── jwt.py
+│   └── dependencies.py
+│
+└── ...
 ```
 
-FastAPI's interactive documentation is available at:
+The planned frontend pieces are:
 
-``` text
-http://127.0.0.1:8000/docs
+```text
+frontend_react/react-app/src/
+├── pages/
+│   ├── Login.tsx
+│   └── ...
+│
+├── auth/
+│   ├── AuthContext.tsx
+│   └── ...
+│
+└── ...
 ```
 
-You can also view the OpenAPI schema at:
+After authentication is implemented, the authenticated user's identity can also be connected to document permissions instead of relying only on the current client-generated session ID.
 
-``` text
-http://127.0.0.1:8000/redoc
+---
+
+# 🔒 Planned Security Model
+
+The long-term architecture should move from:
+
+```text
+session_id → document scope
 ```
 
-## 🧪 Testing the API
+toward:
 
-Using `curl`:
-
-``` bash
-curl -X POST "http://127.0.0.1:8000/chat" ^
-  -H "Content-Type: application/json" ^
-  -d "{\"message\":\"Hello, how are you?\",\"risk\":\"low\"}"
+```text
+authenticated user
+        ↓
+user_id
+        ↓
+chat/session
+        ↓
+document permissions
+        ↓
+RAG retrieval
 ```
 
-Or use the interactive Swagger UI:
+This allows the backend to enforce document isolation independently of the frontend.
 
-``` text
-http://127.0.0.1:8000/docs
+---
+
+# ⚠️ Current Limitations
+
+- The vector database is currently **in-memory**.
+- Restarting the backend clears the in-memory uploaded-document index.
+- The current embedding implementation is lightweight and intended for learning/prototyping rather than production semantic retrieval.
+- Image uploads are accepted but are not currently indexed.
+- There is no persistent user/database layer yet.
+- JWT authentication/login is planned but not yet implemented in this version.
+- There is no production-grade authorization system yet.
+- Human review is represented by a flag; there is no actual review dashboard/workflow.
+- LLM cost tracking is currently simplified.
+- Model routing is rule-based.
+- The current application is intended primarily for development/learning and needs additional hardening before production deployment.
+
+---
+
+# 🚀 Roadmap
+
+### Phase 1 — Core RAG
+- [x] PDF text extraction
+- [x] Chunking
+- [x] Embeddings
+- [x] Vector search
+- [x] Keyword search
+- [x] Hybrid search
+- [x] RRF
+- [x] Reranking
+- [x] Citation-aware prompting
+
+### Phase 2 — AI Application
+- [x] LLM routing
+- [x] Gemini integration
+- [x] Groq integration
+- [x] Provider fallback
+- [x] Casual-message routing
+- [x] PDF upload
+- [x] Session-scoped document ingestion
+
+### Phase 3 — Authentication
+- [ ] Login page
+- [ ] User registration
+- [ ] JWT generation
+- [ ] JWT verification middleware/dependency
+- [ ] Protected chat endpoint
+- [ ] User-specific document permissions
+- [ ] Logout / token handling
+
+### Phase 4 — Production RAG
+- [ ] Persistent vector database
+- [ ] Better embedding model
+- [ ] OCR / vision ingestion
+- [ ] Document management
+- [ ] Persistent conversation history
+- [ ] Better retrieval evaluation
+- [ ] Automated RAG evaluation
+- [ ] Monitoring and structured logging
+
+### Phase 5 — Advanced AI Orchestration
+- [ ] Tool calling
+- [ ] Workflow/state management
+- [ ] Retry policies
+- [ ] Model fallback chains
+- [ ] Human-in-the-loop workflow
+- [ ] Agentic workflows
+- [ ] Evaluation and reliability layer
+
+---
+
+# 🧰 Tech Stack
+
+## Backend
+
+- Python
+- FastAPI
+- Pydantic
+- Uvicorn
+- PyMuPDF
+- Google GenAI SDK
+- Groq SDK
+- python-dotenv
+
+## Frontend
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+
+## AI / RAG
+
+- Embeddings
+- Vector similarity search
+- BM25-style retrieval
+- Reciprocal Rank Fusion
+- Reranking
+- Citation-aware RAG
+- LLM routing
+- Provider fallback
+
+---
+
+# 🎯 What This Project Demonstrates
+
+This project demonstrates practical implementation of a modern GenAI application:
+
+```text
+Frontend
+   ↓
+API
+   ↓
+Authentication [planned]
+   ↓
+Document ingestion
+   ↓
+RAG retrieval
+   ↓
+Hybrid search
+   ↓
+Reranking
+   ↓
+Prompt engineering
+   ↓
+LLM routing
+   ↓
+Fallback handling
+   ↓
+Structured response
 ```
 
-## 🌐 Frontend Integration
+It is therefore more than a basic chatbot: it combines **backend engineering, RAG, LLM integration, retrieval, orchestration, and frontend development** in one application.
 
-The backend currently allows requests from:
+---
 
-``` text
-http://localhost:5173
+# 📌 Development Notes
+
+The repository currently contains some legacy/unused code from earlier versions of the project, including older request/response schemas and a commented-out seed-index implementation.
+
+The active chat flow is centered around:
+
+```text
+backend/chat/routes.py
+backend/rag/ingest.py
+backend/services/chat_service.py
+backend/rag/search.py
+backend/rag/reranker.py
+backend/rag/prompt.py
+backend/services/llm_client.py
 ```
 
-This makes it suitable for connecting to a React/Vite frontend.
+When extending the application, prefer the active upload/ingestion flow instead of reactivating the older commented-out route/seed code without reviewing the current architecture.
 
-Example frontend request:
-
-``` javascript
-const response = await fetch("http://127.0.0.1:8000/chat", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json"
-  },
-  body: JSON.stringify({
-    message: userMessage,
-    risk: "low"
-  })
-})
-
-const data = await response.json()
-```
-
-## 🧩 Core Components
-
-### `app/main.py`
-
-Responsible for:
-
--   Creating the FastAPI application
--   Configuring CORS
--   Defining API endpoints
--   Calling the LLM service
--   Returning validated `ChatResponse` objects
-
-### `app/models/schemas.py`
-
-Contains Pydantic models:
-
--   `ChatRequest`
--   `ChatResponse`
-
-These models validate API input and output.
-
-### `app/services/llm_client.py`
-
-Contains the main LLM logic:
-
--   API client initialization
--   Model configuration
--   Prompt routing
--   Gemini calls
--   Groq calls
--   Standardized `LLMResult` responses
-
-## 🚧 Current Limitations
-
-This project is an early implementation of a hybrid LLM routing system.
-
-Current limitations include:
-
--   Routing is rule-based rather than ML-based.
--   Token usage is not currently populated for Gemini responses.
--   Estimated cost is currently `0.0`.
--   The `risk` request field is validated but is not currently used by
-    the router.
--   Human review is represented by a boolean flag; there is no actual
-    human-review workflow yet.
--   No conversation/database persistence is implemented.
--   No authentication or rate limiting is implemented.
--   Error handling and provider fallback can be expanded.
--   Model selection is currently configured directly in the Python
-    source.
-
-## 🚀 Future Improvements
-
-Possible next steps:
-
-1.  Add automatic provider fallback if one API fails.
-2.  Implement accurate token and cost tracking for every provider.
-3.  Use the `risk` field in routing decisions.
-4.  Add conversation/session memory.
-5.  Add authentication and rate limiting.
-6.  Add structured logging and monitoring.
-7.  Add automated evaluation of routing quality.
-8.  Add retry and timeout handling.
-9.  Move model configuration to environment/config files.
-10. Build a production-ready React frontend.
-11. Add human-in-the-loop review workflows.
-12. Add unit and integration tests.
-
-## 🎯 Learning Goals
-
-This project demonstrates practical concepts involved in building
-production-oriented LLM applications:
-
--   API development with FastAPI
--   Pydantic schema validation
--   Multi-provider LLM integration
--   Model routing
--   Prompt classification
--   Async API design
--   Environment-based secret management
--   Frontend/backend integration
--   AI application architecture
+---
 
 ## 📄 License
 
-This project is intended for learning and development purposes. Add a
-license here if you plan to distribute the project publicly.
+This project is currently intended for learning, portfolio development, and experimentation. Add an appropriate open-source license before distributing it publicly.
