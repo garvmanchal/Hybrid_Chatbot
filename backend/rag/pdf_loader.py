@@ -1,8 +1,6 @@
 import pymupdf
 
-def load_pdf(pdf_path : str ) -> list[dict] :
-    document = pymupdf.open(pdf_path)
-
+def _extract_pages(document) -> list[dict] :
     pages = []
 
     for page_no, page in enumerate(document, start = 1) :
@@ -16,10 +14,31 @@ def load_pdf(pdf_path : str ) -> list[dict] :
             "text" : text
         })
 
+
+    return pages
+
+
+def load_pdf(pdf_path : str) -> list[dict] :
+    document = pymupdf.open(pdf_path)
+
+    pages = _extract_pages(document)
+
     document.close()
 
     return pages
 
+
+def load_pdf_bytes(data:bytes) -> list[dict] :
+    #  same as load_pdf, but reads an in-memory pdf instead of a path on disk
+
+    document = pymupdf.open(stream = data, filetype="pdf")
+
+    pages = _extract_pages(document)
+
+    document.close()
+
+    return pages
+     
 
 if __name__ == "__main__":
         print("pdf loader started")
