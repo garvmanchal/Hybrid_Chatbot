@@ -1,4 +1,4 @@
-# 🤖 Hybrid Chatbot
+   # 🤖 Hybrid Chatbot
 
 A full-stack AI chatbot built with **FastAPI, React, RAG, hybrid retrieval, reranking, and multi-model LLM routing**.
 

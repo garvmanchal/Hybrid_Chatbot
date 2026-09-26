@@ -5,3 +5,7 @@ dotenv
 uvicorn
 pydantic 
 fitz / pip install pymupdf
+ PyJWT 
+ "pwdlib[argon2]" 
+ email-validator 
+ python-multipart
